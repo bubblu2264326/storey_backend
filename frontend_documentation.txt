@@ -1,0 +1,538 @@
+# Multi-Tenant Inventory and Billing System - Frontend Documentation
+
+## Table of Contents
+1. Authentication & Authorization
+2. Store Management
+3. Product Management
+4. Category Management
+5. Purchase Management
+6. Sales Management
+7. Supplier Management
+8. Important Notes & Restrictions
+
+## 1. Authentication & Authorization
+
+### Endpoints
+- POST /auth/register - User registration
+- POST /auth/login - User login
+- GET /auth/me - Get current user info
+
+### Roles
+- admin: Full access to all operations
+- manager: Can manage products, categories, purchases, sales
+- cashier: Can only process sales
+- staff: Read-only access
+
+## 2. Store Management
+
+### Endpoints
+- POST /stores - Create store (admin only)
+- GET /stores - List all stores
+- GET /stores/:id - Get store details
+- PUT /stores/:id - Update store (admin only)
+- DELETE /stores/:id - Delete store (admin only)
+- POST /stores/:id/join - Request to join store
+- GET /stores/:id/users - List store users (admin/manager only)
+
+## 3. Product Management
+
+### Endpoints
+- POST /stores/:store_id/products - Create product
+- GET /stores/:store_id/products - List products
+- GET /stores/:store_id/products/:id - Get product details
+- PUT /stores/:store_id/products/:id - Update product
+- DELETE /stores/:store_id/products/:id - Delete product
+- POST /stores/:store_id/products/:id/reviews - Add review
+- GET /stores/:store_id/products/:id/reviews - Get reviews
+
+### Important Notes
+- Product quantity is automatically managed by the system
+- DO NOT update product quantity directly
+- Use purchase/sale endpoints to modify quantities
+- Barcode must be unique within a store
+
+## 4. Category Management
+
+### Endpoints
+- POST /stores/:store_id/categories - Create category
+- GET /stores/:store_id/categories - List categories
+- GET /stores/:store_id/categories/:id - Get category details
+- PUT /stores/:store_id/categories/:id - Update category
+- DELETE /stores/:store_id/categories/:id - Delete category
+
+## 5. Purchase Management
+
+### Endpoints
+- POST /stores/:store_id/purchases - Create purchase
+- GET /stores/:store_id/purchases - List purchases
+- GET /stores/:store_id/purchases/:id - Get purchase details
+- PUT /stores/:store_id/purchases/:id - Update purchase
+- DELETE /stores/:store_id/purchases/:id - Delete purchase
+- GET /stores/:store_id/purchases/:id/items - Get purchase items
+
+### Important Notes
+- Purchase creation automatically updates product quantities
+- Deleting a purchase restores product quantities
+- Purchase items cannot be modified after creation
+
+## 6. Sales Management
+
+### Endpoints
+- POST /stores/:store_id/sales - Create sale
+- GET /stores/:store_id/sales - List sales
+- GET /stores/:store_id/sales/:id - Get sale details
+- PUT /stores/:store_id/sales/:id - Update sale
+- DELETE /stores/:store_id/sales/:id - Delete sale
+- GET /stores/:store_id/sales/:id/items - Get sale items
+- GET /stores/:store_id/sales/report - Generate sales report
+
+### Important Notes
+- Sale creation automatically reduces product quantities
+- Deleting a sale restores product quantities
+- Sales cannot be created for out-of-stock products
+- DO NOT update product quantities directly
+
+## 7. Supplier Management
+
+### Endpoints
+- POST /stores/:store_id/suppliers - Create supplier
+- GET /stores/:store_id/suppliers - List suppliers
+- GET /stores/:store_id/suppliers/:id - Get supplier details
+- PUT /stores/:store_id/suppliers/:id - Update supplier
+- DELETE /stores/:store_id/suppliers/:id - Delete supplier
+- GET /stores/:store_id/suppliers/:id/purchases - Get supplier purchases
+
+### Important Notes
+- Suppliers cannot be deleted if they have purchase history
+- Supplier contact information is required
+
+## 8. Database Triggers and Procedures
+
+### Important Triggers
+1. `update_product_quantity_on_purchase`
+   - Automatically updates product quantity when purchase is created
+   - Reverts quantity when purchase is deleted
+
+2. `update_product_quantity_on_sale`
+   - Automatically updates product quantity when sale is created
+   - Reverts quantity when sale is deleted
+   - Prevents sales for out-of-stock products
+
+3. `update_product_quantity_on_purchase_item`
+   - Updates product quantity when purchase items are modified
+   - Maintains data consistency
+
+4. `update_product_quantity_on_sale_item`
+   - Updates product quantity when sale items are modified
+   - Maintains data consistency
+
+### Important Procedures
+1. `calculate_sale_total`
+   - Calculates total amount for a sale
+   - Updates sale total when items are modified
+
+2. `calculate_purchase_total`
+   - Calculates total amount for a purchase
+   - Updates purchase total when items are modified
+
+## 9. Frontend Implementation Guidelines
+
+### Data Validation
+- Always validate data before sending to API
+- Check for required fields
+- Validate numeric values
+- Ensure proper date formats
+
+### Error Handling
+- Handle 403 (Forbidden) errors for unauthorized access
+- Handle 404 (Not Found) errors for missing resources
+- Handle 400 (Bad Request) errors for invalid data
+- Handle 500 (Server Error) errors gracefully
+
+### UI/UX Considerations
+1. Product Management
+   - Show current stock levels prominently
+   - Disable sale button for out-of-stock products
+   - Show low stock warnings
+
+2. Sales Management
+   - Validate product availability before sale
+   - Show running total during sale creation
+   - Allow quick product search
+
+3. Purchase Management
+   - Show supplier details
+   - Allow bulk item addition
+   - Show running total
+
+4. Reporting
+   - Provide date range selection
+   - Show loading states for reports
+   - Allow report export
+
+### Security Considerations
+- Store JWT token securely
+- Implement token refresh mechanism
+- Clear sensitive data on logout
+- Implement proper session management
+
+## 10. Common Pitfalls to Avoid
+
+1. Product Quantity Management
+   - DO NOT update product quantity directly
+   - Always use purchase/sale endpoints
+   - Check stock before creating sales
+
+2. Data Consistency
+   - Always use the latest data
+   - Implement proper error handling
+   - Handle concurrent operations carefully
+
+3. User Access
+   - Check user roles before operations
+   - Implement proper access control
+   - Handle unauthorized access gracefully
+
+4. Performance
+   - Implement pagination for large datasets
+   - Cache frequently accessed data
+   - Optimize API calls
+
+## 11. Testing Guidelines
+
+1. Unit Testing
+   - Test all API endpoints
+   - Test error scenarios
+   - Test edge cases
+
+2. Integration Testing
+   - Test complete workflows
+   - Test data consistency
+   - Test concurrent operations
+
+3. UI Testing
+   - Test responsive design
+   - Test accessibility
+   - Test user interactions
+
+## 12. Deployment Considerations
+
+1. Environment Variables
+   - API base URL
+   - Authentication settings
+   - Feature flags
+
+2. Build Process
+   - Optimize assets
+   - Minify code
+   - Handle environment-specific configurations
+
+3. Monitoring
+   - Error tracking
+   - Performance monitoring
+   - User analytics
+
+## Important Notes for Frontend Implementation
+
+### 1. Inventory Transaction Tracking
+- All inventory changes are automatically tracked in the `inventory_transactions` table
+- Frontend should NOT directly update product quantities
+- All quantity changes must go through proper purchase or sale operations
+- Each transaction includes:
+  - Store ID
+  - Product ID (when applicable)
+  - Transaction type
+  - Quantity change
+  - Unit price
+  - User who performed the action
+  - Reference ID (purchase/sale ID)
+  - Descriptive notes
+  - Timestamp
+
+### 2. Data Consistency
+- The system maintains a complete audit trail of all inventory changes
+- All operations are atomic and transactional
+- Frontend should handle transaction failures gracefully
+- Never bypass the proper API endpoints for inventory changes
+
+### 3. Error Handling
+- All API endpoints return consistent error formats:
+  ```json
+  {
+    "error": "Error Type",
+    "message": "Detailed error message"
+  }
+  ```
+- Common error types:
+  - 400: Bad Request (validation errors)
+  - 401: Unauthorized (authentication required)
+  - 403: Forbidden (insufficient permissions)
+  - 404: Not Found (resource doesn't exist)
+  - 409: Conflict (duplicate data)
+  - 500: Internal Server Error
+
+### 4. Authentication & Authorization
+- JWT-based authentication
+- Token must be included in Authorization header: `Bearer <token>`
+- Role-based access control:
+  - Admin: Full access to all stores
+  - Manager: Full access to assigned stores
+  - Staff: Limited access to assigned stores
+
+### 5. Multi-Store Architecture
+- All operations are scoped to a specific store
+- Store ID must be included in all relevant API calls
+- Users can have different roles in different stores
+- Data is strictly isolated between stores
+
+## API Endpoints
+
+### Authentication
+- POST `/auth/register`: User registration
+- POST `/auth/login`: User login
+- POST `/auth/refresh`: Refresh JWT token
+
+### Store Management
+- POST `/stores`: Create new store
+- GET `/stores`: List all stores
+- GET `/stores/:id`: Get store details
+- PUT `/stores/:id`: Update store
+- DELETE `/stores/:id`: Delete store
+- POST `/stores/:id/join`: Request store access
+- PUT `/stores/:id/access`: Manage user access
+
+### Product Management
+- POST `/stores/:store_id/products`: Create product
+- GET `/stores/:store_id/products`: List products
+- GET `/stores/:store_id/products/:id`: Get product details
+- PUT `/stores/:store_id/products/:id`: Update product
+- DELETE `/stores/:store_id/products/:id`: Delete product
+
+### Category Management
+- POST `/stores/:store_id/categories`: Create category
+- GET `/stores/:store_id/categories`: List categories
+- GET `/stores/:store_id/categories/:id`: Get category details
+- PUT `/stores/:store_id/categories/:id`: Update category
+- DELETE `/stores/:store_id/categories/:id`: Delete category
+
+### Purchase Management
+- POST `/stores/:store_id/purchases`: Create purchase
+- GET `/stores/:store_id/purchases`: List purchases
+- GET `/stores/:store_id/purchases/:id`: Get purchase details
+- PUT `/stores/:store_id/purchases/:id`: Update purchase
+- DELETE `/stores/:store_id/purchases/:id`: Delete purchase
+- GET `/stores/:store_id/purchases/:id/items`: Get purchase items
+
+### Sales Management
+- POST `/stores/:store_id/sales`: Create sale
+- GET `/stores/:store_id/sales`: List sales
+- GET `/stores/:store_id/sales/:id`: Get sale details
+- PUT `/stores/:store_id/sales/:id`: Update sale
+- DELETE `/stores/:store_id/sales/:id`: Delete sale
+- GET `/stores/:store_id/sales/:id/items`: Get sale items
+- GET `/stores/:store_id/sales/report`: Generate sales report
+
+### Supplier Management
+- POST `/stores/:store_id/suppliers`: Create supplier
+- GET `/stores/:store_id/suppliers`: List suppliers
+- GET `/stores/:store_id/suppliers/:id`: Get supplier details
+- PUT `/stores/:store_id/suppliers/:id`: Update supplier
+- DELETE `/stores/:store_id/suppliers/:id`: Delete supplier
+- GET `/stores/:store_id/suppliers/:id/purchases`: Get supplier purchases
+
+### Inventory Transactions
+- GET `/stores/:store_id/transactions`: List inventory transactions
+- GET `/stores/:store_id/transactions/:id`: Get transaction details
+- GET `/stores/:store_id/products/:id/transactions`: Get product transaction history
+
+## Frontend Implementation Guidelines
+
+### 1. State Management
+- Use a state management solution (e.g., Redux, Context API)
+- Cache store-specific data
+- Implement optimistic updates for better UX
+- Handle loading and error states appropriately
+
+### 2. Form Handling
+- Implement proper validation
+- Show clear error messages
+- Handle file uploads appropriately
+- Use proper input types for different data
+
+### 3. UI/UX Considerations
+- Show loading indicators during API calls
+- Implement proper error messages
+- Use pagination for large data sets
+- Implement search and filtering
+- Show confirmation dialogs for destructive actions
+
+### 4. Security Best Practices
+- Never store sensitive data in localStorage
+- Implement proper token refresh mechanism
+- Handle session timeouts gracefully
+- Implement proper input sanitization
+
+### 5. Testing Requirements
+- Unit tests for components
+- Integration tests for API calls
+- End-to-end tests for critical flows
+- Test error scenarios
+- Test multi-store functionality
+
+### 6. Deployment Considerations
+- Environment-specific configurations
+- Proper error tracking
+- Performance monitoring
+- Security headers
+- CORS configuration
+
+## Common Pitfalls to Avoid
+
+1. **Direct Quantity Updates**
+   - Never update product quantities directly
+   - Always use proper purchase or sale operations
+   - This ensures proper transaction tracking
+
+2. **Missing Store Context**
+   - Always include store_id in relevant API calls
+   - Maintain proper store context in the frontend
+   - Handle store switching appropriately
+
+3. **Improper Error Handling**
+   - Don't show raw error messages to users
+   - Implement proper error boundaries
+   - Handle network errors gracefully
+
+4. **Missing Loading States**
+   - Show loading indicators during API calls
+   - Prevent multiple submissions
+   - Handle concurrent operations properly
+
+5. **Security Issues**
+   - Don't store sensitive data in localStorage
+   - Implement proper token refresh
+   - Handle session timeouts
+   - Sanitize user inputs
+
+## Testing and Deployment
+
+### Testing
+1. **Unit Tests**
+   - Test individual components
+   - Test utility functions
+   - Test state management
+
+2. **Integration Tests**
+   - Test API integration
+   - Test form submissions
+   - Test error handling
+
+3. **End-to-End Tests**
+   - Test critical user flows
+   - Test multi-store functionality
+   - Test error scenarios
+
+### Deployment
+1. **Environment Setup**
+   - Development
+   - Staging
+   - Production
+
+2. **Build Process**
+   - Minification
+   - Code splitting
+   - Asset optimization
+
+3. **Monitoring**
+   - Error tracking
+   - Performance monitoring
+   - User analytics
+
+4. **Security**
+   - HTTPS
+   - Security headers
+   - CORS configuration
+   - Content Security Policy
+
+## 1. Environment Variables & JWT Setup
+- The backend uses a `.env` file in the project root (`se_backend/`).
+- **Required variables:**
+  - `DATABASE_URL` (PostgreSQL connection string)
+  - `JWT_SECRET` (any long, random string; required for authentication)
+  - `PORT` (default: 8080)
+  - `NODE_ENV` (default: development)
+- **After editing `.env`, always restart the backend server.**
+- If you get errors like `secretOrPrivateKey must have a value`, it means `JWT_SECRET` is missing or not loaded. Double-check the `.env` file and restart the server.
+
+## 2. Authentication Flow
+- **Register:**
+  - Endpoint: `POST /api/auth/register`
+  - Body (JSON):
+    ```json
+    {
+      "name": "Test User",
+      "email": "test@example.com",
+      "password": "password123"
+    }
+    ```
+  - No token required for registration.
+  - If you get `{ "error": "Bad Request", "message": "User already exists" }`, use a new email.
+
+- **Login:**
+  - Endpoint: `POST /api/auth/login`
+  - Body (JSON):
+    ```json
+    {
+      "email": "test@example.com",
+      "password": "password123"
+    }
+    ```
+  - Returns `{ user, token }` on success.
+
+- **Use JWT Token:**
+  - For all protected endpoints, add this header:
+    `Authorization: Bearer <token>`
+  - Example (get all products for a store):
+    ```http
+    GET /api/products/stores/1
+    Authorization: Bearer <token>
+    ```
+
+## 3. Common Issues & Troubleshooting
+- **400 Bad Request: User already exists**
+  - Use a new email for registration.
+- **500 Internal Server Error: secretOrPrivateKey must have a value**
+  - The backend cannot find `JWT_SECRET`.
+  - Make sure `.env` exists, is in the right place, and has `JWT_SECRET` set.
+  - Restart the backend after editing `.env`.
+- **Cannot destructure property 'name' of 'req.body' as it is undefined**
+  - Make sure you are sending JSON and have `Content-Type: application/json` in your request.
+
+## 4. Testing Endpoints (Postman/Curl)
+- Register a user, then login, then use the token for protected endpoints.
+- Example curl commands:
+  ```bash
+  curl -X POST http://localhost:8080/api/auth/register \
+    -H "Content-Type: application/json" \
+    -d '{"name":"Test User","email":"test@example.com","password":"password123"}'
+
+  curl -X POST http://localhost:8080/api/auth/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"test@example.com","password":"password123"}'
+
+  curl -X GET http://localhost:8080/api/products/stores/1 \
+    -H "Authorization: Bearer <token>"
+  ```
+
+## 5. Notes for Frontend Implementation
+- Always check for 401/403 errors and redirect to login if the token is invalid or expired.
+- Store the JWT token securely (e.g., in memory or httpOnly cookie, not localStorage if possible).
+- Handle error messages from the backend and display them to the user.
+- If you get repeated 500 errors, check the backend logs for details.
+
+## 6. Backend Health Check
+- Endpoint: `GET /health`
+- Returns `{ status: 'ok' }` if the backend is running.
+
+---
+**If you encounter any issues not covered here, check the backend logs or contact the backend developer for support.** -

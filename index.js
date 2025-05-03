@@ -1,36 +1,49 @@
-const express=require('express');
-const morgan=require('morgan');
-const {Pool}=require('pg');
-const dotenv=require('dotenv');
+const express = require('express');
+const morgan = require('morgan');
+const cors = require('cors');
+const dotenv = require('dotenv');
 dotenv.config();
-const {product_router}=require('./routes/products.routes.js')
-const app=express();
 
-//app level middlewares
-//logs the incoming request to the server
-app.use(morgan('dev'));
-//parse input into json format
-app.use(express.json())
+// Import routes
+const productsRouter = require('./routes/products.routes');
+const storesRouter = require('./routes/stores.routes');
+const authRouter = require('./routes/auth.routes');
 
+const app = express();
 
-//global level middleware for error detection
-app.use((err,req,res,next)=>{
-    console.error('Unhandeled error:',err.stack);
-    res.status(500).json({error:'Internal server error'});
-})
+// App level middlewares
+app.use(morgan('dev')); // Log requests
+app.use(cors()); // Enable CORS
+app.use(express.json()); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
-console.log(typeof(product_router));
+// Routes
+app.use('/api/auth', authRouter);
+app.use('/api/products', productsRouter);
+app.use('/api/stores', storesRouter);
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err.stack);
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: 'An unexpected error occurred'
+    });
+});
 
-//bbinding routers to app
-app.use('/products',product_router);
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        error: 'Not Found',
+        message: 'The requested resource was not found'
+    });
+});
 
-
-
-app.listen(8080,(err)=>{
-    
-    console.log("server is up on localhost:8080");
-}).on('error',(err)=>{
-    console.error("server failed to start because of :",err);
-    process.exit(1)
-})
+// Start server
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+}).on('error', (err) => {
+    console.error('Server failed to start:', err);
+    process.exit(1);
+});
