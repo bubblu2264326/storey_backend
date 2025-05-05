@@ -18,9 +18,9 @@ app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // Routes
-app.use('/api/auth', authRouter);
-app.use('/api/products', productsRouter);
-app.use('/api/stores', storesRouter);
+app.use('/auth', authRouter);
+app.use('/products', productsRouter);
+app.use('/stores', storesRouter);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
